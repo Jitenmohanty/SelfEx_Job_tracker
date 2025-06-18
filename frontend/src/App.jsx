@@ -44,7 +44,15 @@ function App() {
                 <PrivateRoute>
                   <JobForm />
                 </PrivateRoute>
-              } 
+              }
+            />
+            <Route
+              path="/jobs/edit-application/:id" // New route for admin editing user application
+              element={
+                <PrivateRoute>
+                  <JobForm />
+                </PrivateRoute>
+              }
             />
           </Routes>
         </JobProvider>

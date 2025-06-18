@@ -1,30 +1,37 @@
 const express = require('express');
 const router = express.Router();
-const { 
-  createJobApplication, 
-  getJobApplications, 
-  getJobApplication, 
-  updateJobApplication, 
-  deleteJobApplication 
-} = require('../controllers/jobController');
-const auth = require('../middleware/auth');
 
-// All routes are protected
+const {
+  createJobOpportunity,
+  applyToJobOpportunity,
+  getJobItems,
+  getJobItem,
+  updateJobItem,
+  deleteJobItem
+} = require('../controllers/jobController');
+
+const auth = require('../middleware/auth');
+const authorize = require('../middleware/authorize'); // authorize middleware for admin-only routes
+
+// All routes require authentication
 router.use(auth);
 
-// Create a new job application
-router.post('/', createJobApplication);
+// Admin: Create a new Job Opportunity
+router.post('/opportunity', authorize('admin'), createJobOpportunity);
 
-// Get all job applications for a user
-router.get('/', getJobApplications);
+// User: Apply to a Job Opportunity
+router.post('/opportunity/:jobOpportunityId/apply', applyToJobOpportunity);
 
-// Get a single job application
-router.get('/:id', getJobApplication);
+// Get Job Items (Opportunities or User Applications based on query params)
+router.get('/items', getJobItems);
 
-// Update a job application
-router.put('/:id', updateJobApplication);
+// Get a single Job Item (Opportunity or User Application)
+router.get('/items/:id', getJobItem);
 
-// Delete a job application
-router.delete('/:id', deleteJobApplication);
+// Update a Job Item (Opportunity by admin, User Application by admin or owner if allowed by controller)
+router.put('/items/:id', updateJobItem); // Authorization is handled within updateJobItem
+
+// Delete a Job Item (Opportunity by admin, User Application by admin or owner if allowed by controller)
+router.delete('/items/:id', deleteJobItem); // Authorization is handled within deleteJobItem
 
 module.exports = router;

@@ -26,73 +26,113 @@ const dummyUsers = [
   }
 ];
 
-// Dummy job application data
-const dummyJobApplications = [
+// Dummy job postings data (created by admin)
+const dummyJobPostings = [
   {
-    company: 'Google',
-    role: 'Frontend Developer',
-    status: 'Applied',
-    appliedDate: new Date('2023-05-15'),
-    notes: 'Applied through company website'
+    company: 'Innovatech Solutions',
+    role: 'Senior Software Engineer',
+    status: 'Open', // Posting status
+    appliedDate: new Date('2024-05-01'), // Date posted
+    notes: 'Looking for a skilled engineer with 5+ years of experience in Node.js and React. Exciting projects in AI and ML.',
+    isPosting: true,
   },
   {
-    company: 'Microsoft',
-    role: 'Backend Developer',
-    status: 'Interview',
-    appliedDate: new Date('2023-05-10'),
-    notes: 'First interview scheduled for next week'
+    company: 'HealthWell Dynamics',
+    role: 'UX/UI Designer',
+    status: 'Open',
+    appliedDate: new Date('2024-05-10'),
+    notes: 'Join our team to design intuitive interfaces for healthcare applications. Portfolio required.',
+    isPosting: true,
   },
   {
-    company: 'Amazon',
-    role: 'Full Stack Developer',
-    status: 'Offer',
-    appliedDate: new Date('2023-04-20'),
-    notes: 'Received offer, negotiating salary'
+    company: 'GreenFuture Energy',
+    role: 'Data Analyst',
+    status: 'Closed', // Example of a closed posting
+    appliedDate: new Date('2024-04-15'),
+    notes: 'This position has been filled. Analyzing renewable energy data to drive insights.',
+    isPosting: true,
   },
   {
-    company: 'Facebook',
-    role: 'React Developer',
-    status: 'Rejected',
-    appliedDate: new Date('2023-04-05'),
-    notes: 'Rejected after technical interview'
-  },
-  {
-    company: 'Netflix',
-    role: 'Node.js Developer',
-    status: 'Applied',
-    appliedDate: new Date('2023-05-20'),
-    notes: 'Applied through referral'
+    company: 'Innovatech Solutions', // Same company, different role
+    role: 'Product Manager',
+    status: 'Open',
+    appliedDate: new Date('2024-05-15'),
+    notes: 'Seeking an experienced Product Manager to lead our new SaaS product line. Agile experience is a must.',
+    isPosting: true,
   }
 ];
 
 // Function to seed the database
 const seedDatabase = async () => {
   try {
-    // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('Connected to MongoDB for seeding');
 
-    // Clear existing data
     await User.deleteMany({});
-    await JobApplication.deleteMany({});
-    console.log('Cleared existing data');
+    await JobApplication.deleteMany({}); // This now clears both postings and applications
+    console.log('Cleared existing User and JobApplication data');
 
     // Create users
     const createdUsers = await User.create(dummyUsers);
-    console.log(`Created ${createdUsers.length} users`);
+    const adminUser = createdUsers.find(u => u.role === 'admin');
+    const applicantUser = createdUsers.find(u => u.role === 'applicant');
 
-    // Create job applications for the first user
-    const userId = createdUsers[0]._id;
-    
-    const jobPromises = dummyJobApplications.map(job => {
+    if (!adminUser || !applicantUser) {
+      console.error('Admin or applicant user not found in dummyUsers array. Seeding cannot continue.');
+      process.exit(1);
+    }
+    console.log(`Created ${createdUsers.length} users. Admin: ${adminUser.email}, Applicant: ${applicantUser.email}`);
+
+    // Create Job Postings (Job Opportunities) (associated with admin user)
+    const createdJobPostings = await Promise.all(
+      dummyJobPostings.map(posting => JobApplication.create({
+        ...posting,
+        user: adminUser._id, // Admin creates the opportunity
+        isPosting: true // Explicitly set
+      }))
+    );
+    console.log(`Created ${createdJobPostings.length} job postings (opportunities).`);
+
+    // Create some User Applications from the applicantUser to the postings
+    const dummyUserApplications = [
+      { // Applicant applies to Innovatech - Senior Software Engineer
+        originalJobPostingId: createdJobPostings[0]._id, // Link to the first posting
+        company: createdJobPostings[0].company, // Inherit for clarity, though backend also does this
+        role: createdJobPostings[0].role,       // Inherit for clarity
+        status: 'Applied',
+        appliedDate: new Date('2024-05-20'),
+        notes: 'Very interested in this role, my experience aligns well with the requirements mentioned.',
+        isPosting: false, // This is a user application
+      },
+      { // Applicant applies to HealthWell - UX/UI Designer
+        originalJobPostingId: createdJobPostings[1]._id, // Link to the second posting
+        company: createdJobPostings[1].company,
+        role: createdJobPostings[1].role,
+        status: 'Interview', // Example of an application in interview stage
+        appliedDate: new Date('2024-05-22'),
+        notes: 'Submitted my portfolio. Had a good initial call with HR.',
+        isPosting: false,
+      },
+      { // Applicant applies to Innovatech - Product Manager
+        originalJobPostingId: createdJobPostings[3]._id, // Link to the fourth posting
+        company: createdJobPostings[3].company,
+        role: createdJobPostings[3].role,
+        status: 'Applied',
+        appliedDate: new Date('2024-05-25'),
+        notes: 'Excited about the product management opportunity at Innovatech.',
+        isPosting: false,
+      }
+    ];
+
+    const userApplicationCreationPromises = dummyUserApplications.map(appSeed => {
       return JobApplication.create({
-        ...job,
-        user: userId
+        ...appSeed, // Contains company, role, status, notes, isPosting, originalJobPostingId
+        user: applicantUser._id, // The user applying
       });
     });
-
-    const createdJobs = await Promise.all(jobPromises);
-    console.log(`Created ${createdJobs.length} job applications for user ${userId}`);
+    
+    const createdUserApplications = await Promise.all(userApplicationCreationPromises);
+    console.log(`Created ${createdUserApplications.length} user job applications for user ${applicantUser.email}.`);
 
     console.log('Database seeded successfully!');
     process.exit(0);
@@ -116,29 +156,29 @@ const simulateRealTimeUpdates = async () => {
       console.log('Connected to MongoDB for real-time simulation');
     }
 
-    // Find a user
-    const user = await User.findOne({ email: 'testuser@example.com' });
-    if (!user) {
-      console.error('Test user not found. Run seedDatabase first.');
+    // Find a user (ensure this email matches one in dummyUsers)
+    const userToSimulateFor = await User.findOne({ email: 'testuser@example.com' });
+    if (!userToSimulateFor) {
+      console.error('Test user (testuser@example.com) not found. Ensure they exist in dummyUsers and run seedDatabase first.');
       process.exit(1);
     }
 
-    // Find a job application
-    const jobApplication = await JobApplication.findOne({ user: user._id });
-    if (!jobApplication) {
-      console.error('No job applications found for test user. Run seedDatabase first.');
+    // Find an actual user application (isPosting: false) for this user to simulate update
+    const userApplicationToUpdate = await JobApplication.findOne({ user: userToSimulateFor._id, isPosting: false });
+    if (!userApplicationToUpdate) {
+      console.error(`No actual user applications (isPosting: false) found for user ${userToSimulateFor.email}. Run seedDatabase first.`);
       process.exit(1);
     }
 
-    // Update the job application status
+    // Update the user application status
     const statuses = ['Applied', 'Interview', 'Offer', 'Rejected', 'Accepted'];
-    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)]; // Ensure these statuses are valid for an application
     
-    jobApplication.status = randomStatus;
-    jobApplication.updatedAt = Date.now();
-    await jobApplication.save();
+    userApplicationToUpdate.status = randomStatus;
+    userApplicationToUpdate.updatedAt = Date.now();
+    await userApplicationToUpdate.save();
     
-    console.log(`Updated job application ${jobApplication._id} status to ${randomStatus}`);
+    console.log(`Updated job application ${userApplicationToUpdate._id} (for user ${userToSimulateFor.email}) status to ${randomStatus}`);
 
     // Initialize Socket.io for simulation
     let io;
@@ -157,13 +197,13 @@ const simulateRealTimeUpdates = async () => {
       });
     }
 
-    // Emit socket event for real-time notification
-    io.to(user._id.toString()).emit('jobUpdate', {
-      message: `Job application for ${jobApplication.company} updated to ${randomStatus}`,
-      jobApplication
+    // Emit socket event for real-time notification to the specific user
+    io.to(userToSimulateFor._id.toString()).emit('jobUpdate', {
+      message: `Your job application for ${userApplicationToUpdate.company} has been updated to ${randomStatus}`,
+      jobApplication: userApplicationToUpdate // Send the updated application object
     });
     
-    console.log('Emitted real-time notification');
+    console.log(`Emitted real-time notification to user ${userToSimulateFor.email}`);
     
     // Give some time for the socket event to be sent before exiting
     setTimeout(() => {
