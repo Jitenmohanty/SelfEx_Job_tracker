@@ -4,6 +4,23 @@ A simple yet powerful full-stack job application tracking system with real-time 
 
 ---
 
+### 📌 How It Works (Admin + User Roles)
+
+#### 👑 Admin
+- Can create job opportunities (job postings) without assigning them to specific users.
+- Can view all applications submitted by different users for each job posting.
+- Can update the status of any user's job application (e.g., move from "Applied" to "Interview", "Offer", etc.).
+
+#### 👤 User
+- Can view all **open job postings** that they haven't applied to yet.
+- Can **apply** to any open job (once per job).
+- Can track their own job applications and status history via the dashboard.
+
+#### 🔔 Real-Time Updates
+- When an admin updates a user's job application, a **real-time Socket.IO notification** is sent.
+- If the user is currently logged in, the update appears instantly on their dashboard.
+
+
 ## 🧠 Features
 
 ### 👤 User Authentication
