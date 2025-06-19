@@ -84,7 +84,7 @@ const JobList = () => {
       };
       // After fetching opportunities, fetch user's applications to mark which ones they've applied to
       if (user.role !== 'admin') {
-        const myAppsResponse = await api.get(`/jobs/items?type=my_applications&user=${user._id}`);
+        const myAppsResponse = await api.get(`${import.meta.env.VITE_BACKEND_URI}/api/jobs/items?type=my_applications&user=${user._id}`);
         if (myAppsResponse.data) {
             setMyAppliedOpportunityIds(new Set(myAppsResponse.data.map(app => app.originalJobPostingId)));
         }
