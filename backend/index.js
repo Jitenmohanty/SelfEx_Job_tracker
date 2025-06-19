@@ -11,13 +11,42 @@ const app = express();
 const server = http.createServer(app);
 const io = socketInit.init(server);
 
+// Define allowed origins for different environments
+const allowedOrigins = [
+  process.env.CLIENT_URI, // Your main client URI from env
+  "http://localhost:5173", // Local development
+  "https://self-ex-job-tracker.vercel.app", // Production domain
+  "https://self-ex-job-tracker.vercel.app", // Vercel deployment
+  // Add more origins as needed
+].filter(Boolean); // Remove any undefined values
+
 // Middleware
 app.use(
   cors({
-    origin: process.env.CLIENT_URI,
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      // Check if the origin is in our allowed list
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      // For development, you might want to be more permissive
+      if (process.env.NODE_ENV === "development") {
+        return callback(null, true);
+      }
+      
+      // Reject the request
+      const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
+      return callback(new Error(msg), false);
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-csrf-token"],
   })
 );
+
 app.use(express.json());
 
 // Connect to MongoDB
@@ -115,4 +144,5 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📡 WebSocket server ready for connections`);
+  console.log(`🌐 Allowed origins:`, allowedOrigins);
 });
