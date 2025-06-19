@@ -198,7 +198,7 @@ job-tracker/
 
 ## 🙌 Contributors
 
-Built with 💖 by [Your Name] and the developer community.
+Built with 💖 by Jiten Kumar Mohanty and the developer community.
 
 ---
 
