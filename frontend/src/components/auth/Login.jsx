@@ -9,6 +9,8 @@ const Login = () => {
     email: '',
     password: ''
   });
+
+  console.log(import.meta.env.VITE_BACKEND_URI);
   
   const { login, loading, error } = useContext(AuthContext);
   const navigate = useNavigate();
