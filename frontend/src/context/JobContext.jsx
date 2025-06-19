@@ -46,7 +46,7 @@ export const JobProvider = ({ children }) => {
       params.append("sort", sortOrder);
 
       // The backend endpoint is now /items
-      const response = await api.get(`/jobs/items?${params.toString()}`);
+      const response = await api.get(`${import.meta.env.VITE_BACKEND_URI}/api/jobs/items?${params.toString()}`);
       setJobItems(response.data);
       setError(null);
     } catch (err) {
@@ -130,7 +130,7 @@ useEffect(() => {
   const createJobOpportunity = async (opportunityData) => {
     try {
       setLoading(true);
-      const response = await api.post('/jobs/opportunity', opportunityData);
+      const response = await api.post(`${import.meta.env.VITE_BACKEND_URI}/api/jobs/opportunity`, opportunityData);
       setJobItems(prevItems => [response.data, ...prevItems]);
       setError(null);
       toast.success('Job opportunity created successfully');
@@ -168,7 +168,7 @@ useEffect(() => {
   const updateJobItem = async (id, itemData) => {
     try {
       setLoading(true);
-      const response = await api.put(`/jobs/items/${id}`, itemData);
+      const response = await api.put(`${import.meta.env.VITE_BACKEND_URI}/api/jobs/items/${id}`, itemData);
       // Socket event should handle updates for other users.
       // Update local state for immediate feedback.
       setJobItems(prevItems => prevItems.map(item => item._id === id ? response.data : item));
@@ -188,7 +188,7 @@ useEffect(() => {
   const deleteJobItem = async (id) => {
     try {
       setLoading(true);
-      const response = await api.delete(`/jobs/items/${id}`);
+      const response = await api.delete(`${import.meta.env.VITE_BACKEND_URI}/api/jobs/items/${id}`);
       // Socket event handles notifications. Update local state.
       setJobItems(prevItems => prevItems.filter(item => item._id !== id));
       setError(null);
@@ -207,7 +207,7 @@ useEffect(() => {
   const getJobItem = useCallback(async (id) => {
     try {
       setLoading(true);
-      const response = await api.get(`/jobs/items/${id}`);
+      const response = await api.get(`${import.meta.env.VITE_BACKEND_URI}/api/jobs/items/${id}`);
       setError(null);
       return response.data;
     } catch (err) {
