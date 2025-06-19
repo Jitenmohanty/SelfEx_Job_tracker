@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
       }
       
       try {
-        const response = await api.get('/users/profile');
+        const response = await api.get(`${import.meta.env.VITE_BACKEND_URI}/users/profile`);
         setUser(response.data);
       } catch (error) {
         localStorage.removeItem('token');
@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       setLoading(true);
-      const response = await api.post('/users/login', { email, password });
+      const response = await api.post(`${import.meta.env.VITE_BACKEND_URI}/users/login`, { email, password });
       localStorage.setItem('token', response.data.token);
       setUser(response.data);
       setError(null);
@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (name, email, password) => {
     try {
       setLoading(true);
-      const response = await api.post('/users/register', { name, email, password });
+      const response = await api.post(`${import.meta.env.VITE_BACKEND_URI}/users/register`, { name, email, password });
       localStorage.setItem('token', response.data.token);
       setUser(response.data);
       setError(null);
